@@ -1,4 +1,5 @@
 import { Start } from './scenes/Start.js';
+import { Gameplay } from './scenes/Gameplay.js';
 
 const config = {
     type: Phaser.AUTO,
@@ -10,7 +11,8 @@ const config = {
     backgroundColor: '#000000',
     pixelArt: false,
     scene: [
-        Start
+        Gameplay
+        // Start - temporarily disabled for Phase 1 development
     ],
     scale: {
         mode: Phaser.Scale.FIT,
