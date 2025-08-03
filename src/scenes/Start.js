@@ -1,3 +1,5 @@
+import { fontStyles } from '../fontStyles.js';
+
 export class Start extends Phaser.Scene {
 
     constructor() {
@@ -6,12 +8,7 @@ export class Start extends Phaser.Scene {
 
     preload() {
         // Load custom font using CSS
-        this.load.css('pressStart2P', `
-            @font-face {
-                font-family: 'Press Start 2P';
-                src: url('assets/PressStart2P-Regular.ttf') format('truetype');
-            }
-        `);
+        
         
         this.load.image('background', 'assets/space.png');
         this.load.image('logo', 'assets/phaser.png');
@@ -65,17 +62,14 @@ export class Start extends Phaser.Scene {
             this.soundEnabled = true;
         }
         
-        console.log('Sound state initialized in Start scene:', this.soundEnabled);
+        ('Sound state initialized in Start scene:', this.soundEnabled);
     }
 
     createSoundButton() {
         // Create sound button in top-left corner
         this.soundButton = this.add.text(50, 50, this.getSoundButtonText(), {
-            fontSize: '18px',
-            fill: this.getSoundButtonColor(),
-            fontFamily: '"Press Start 2P", monospace',
-            backgroundColor: '#000000',
-            padding: { x: 10, y: 5 }
+            ...fontStyles.button,
+            fill: this.getSoundButtonColor()
         });
         
         // Make button interactive
@@ -93,7 +87,7 @@ export class Start extends Phaser.Scene {
             this.soundButton.setScale(1.0);
         });
         
-        console.log('Sound button created in Start scene');
+        ('Sound button created in Start scene');
     }
 
     getSoundButtonText() {
@@ -105,11 +99,11 @@ export class Start extends Phaser.Scene {
     }
 
     toggleSound() {
-        console.log('Sound button clicked in Start scene, current state:', this.soundEnabled);
+        ('Sound button clicked in Start scene, current state:', this.soundEnabled);
         
         // If this is the first interaction and audio is locked, unlock it
         if (this.sound.locked) {
-            console.log('Unlocking audio on first interaction in Start scene');
+            ('Unlocking audio on first interaction in Start scene');
             this.sound.unlock();
         }
         
@@ -119,7 +113,7 @@ export class Start extends Phaser.Scene {
         // Save preference to localStorage
         try {
             localStorage.setItem('soundEnabled', this.soundEnabled.toString());
-            console.log('Sound preference saved from Start scene:', this.soundEnabled);
+            ('Sound preference saved from Start scene:', this.soundEnabled);
         } catch (error) {
             console.warn('Could not save sound preference to localStorage:', error);
         }
@@ -127,7 +121,7 @@ export class Start extends Phaser.Scene {
         // Update button appearance
         this.updateSoundButton();
         
-        console.log('Sound toggled to in Start scene:', this.soundEnabled);
+        ('Sound toggled to in Start scene:', this.soundEnabled);
     }
 
     updateSoundButton() {

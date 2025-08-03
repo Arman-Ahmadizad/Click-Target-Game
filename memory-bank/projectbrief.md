@@ -9,7 +9,7 @@
 
 ## Core Objective
 
-Create a simple, fast-paced casual game where players click or tap on targets that appear randomly on screen to achieve the highest score within a limited time.
+Create a simple, fast-paced casual game where players click or tap on targets that appear randomly on screen to survive as long as possible using a life-based system.
 
 ## Key Requirements
 
@@ -17,9 +17,10 @@ Create a simple, fast-paced casual game where players click or tap on targets th
 
 - **Random Target Spawning**: Targets appear at random locations with configurable timing
 - **Click/Tap Interaction**: Support both mouse clicks and touch input for mobile
-- **Scoring System**: Real-time score tracking with visual feedback
-- **Timer Mechanism**: 30-second game duration with countdown display
-- **Sound Effects**: Audio feedback for successful hits
+- **Life-Based System**: Players start with fixed life amount that changes based on actions
+- **Life Management**: Target hits add life, misses and missed targets reduce life
+- **Survival Gameplay**: Game continues until life reaches zero
+- **Sound Effects**: Audio feedback for successful hits and life changes
 - **Game States**: Start screen, gameplay, and game over screens
 
 ### Technical Requirements
@@ -40,5 +41,5 @@ Create a simple, fast-paced casual game where players click or tap on targets th
 
 - Smooth, responsive gameplay
 - Intuitive mobile and desktop experience
-- Visually appealing interface
+- Engaging life-based survival mechanics
 - Stable performance across different devices
