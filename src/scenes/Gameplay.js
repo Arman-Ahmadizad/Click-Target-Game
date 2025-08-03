@@ -5,10 +5,19 @@ export class Gameplay extends Phaser.Scene {
     }
 
     preload() {
+        // Load custom font using CSS
+        this.load.css('pressStart2P', `
+            @font-face {
+                font-family: 'Press Start 2P';
+                src: url('assets/PressStart2P-Regular.ttf') format('truetype');
+            }
+        `);
+        
         // Load all required game assets
         this.load.image('target', 'assets/crosshair067.png');
         this.load.image('background', 'assets/bg_layer1.png');
         this.load.audio('click', 'assets/click_004.ogg');
+        this.load.audio('explosion', 'assets/explosion.ogg');
         
         // Load ship sprite for targets
         this.load.spritesheet('ship', 'assets/spaceship.png', { frameWidth: 176, frameHeight: 96 });
@@ -25,31 +34,19 @@ export class Gameplay extends Phaser.Scene {
         this.background = this.add.image(640, 360, 'background');
         this.background.setDisplaySize(1280, 720);
 
-        // Add development verification text
-        this.add.text(640, 100, 'GAMEPLAY SCENE ACTIVE', {
-            fontSize: '32px',
-            fill: '#ffffff',
-            fontFamily: 'Arial'
-        }).setOrigin(0.5);
-
-        this.add.text(640, 150, 'Assets Loaded Successfully', {
-            fontSize: '24px',
-            fill: '#00ff00',
-            fontFamily: 'Arial'
-        }).setOrigin(0.5);
-
-        // Add placeholder for future game elements
-        this.add.text(640, 300, 'Target Interaction System Active', {
-            fontSize: '18px',
-            fill: '#00ff00',
-            fontFamily: 'Arial'
-        }).setOrigin(0.5);
-
         // Initialize game variables
         this.score = 0;
         this.timeLeft = 30;
         this.targets = [];
         this.gameStartTime = this.time.now;
+        
+        // Audio management
+        this.maxConcurrentSounds = 3;
+        this.activeSounds = [];
+        this.audioUnlocked = false;
+        
+        // Global sound state management
+        this.initializeSoundState();
         
         // Target spawning configuration
         this.maxTargets = 4;
@@ -84,35 +81,145 @@ export class Gameplay extends Phaser.Scene {
         });
 
         // Placeholder score display
-        this.scoreText = this.add.text(50, 50, 'Score: 0', {
+        this.scoreText = this.add.text(50, 100, 'Score: 0', {
             fontSize: '24px',
             fill: '#ffffff',
-            fontFamily: 'Arial'
+            fontFamily: '"Press Start 2P", monospace'
         });
 
         // Placeholder timer display
         this.timerText = this.add.text(1230, 50, 'Time: 30', {
             fontSize: '24px',
             fill: '#ffffff',
-            fontFamily: 'Arial'
+            fontFamily: '"Press Start 2P", monospace'
         }).setOrigin(1, 0);
-        
-        // Development info display
-        this.targetCountText = this.add.text(640, 650, 'Targets: 0/4', {
-            fontSize: '18px',
-            fill: '#ffff00',
-            fontFamily: 'Arial'
-        }).setOrigin(0.5);
 
         console.log('Gameplay scene created successfully');
-        console.log('Assets loaded:', {
-            target: this.textures.exists('target'),
-            background: this.textures.exists('background'),
-            click: this.cache.audio.exists('click'),
-            ship: this.textures.exists('ship'),
-            explosion: this.textures.exists('explosion')
+        
+        // Add audio unlock handler for Chrome autoplay policy
+        this.setupAudioUnlock();
+        
+        // Create sound button
+        this.createSoundButton();
+    }
+
+    initializeSoundState() {
+        // Load sound preference from localStorage
+        const savedSoundState = localStorage.getItem('soundEnabled');
+        
+        if (savedSoundState !== null) {
+            this.soundEnabled = savedSoundState === 'true';
+        } else {
+            // Default to sound enabled
+            this.soundEnabled = true;
+        }
+        
+        console.log('Sound state initialized:', this.soundEnabled);
+    }
+
+    createSoundButton() {
+        // Create sound button in top-left corner
+        this.soundButton = this.add.text(50, 50, this.getSoundButtonText(), {
+            fontSize: '18px',
+            fill: this.getSoundButtonColor(),
+            fontFamily: '"Press Start 2P", monospace',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 }
         });
-        console.log('Spawn bounds:', this.spawnBounds);
+        
+        // Make button interactive
+        this.soundButton.setInteractive();
+        this.soundButton.on('pointerdown', () => {
+            this.toggleSound();
+        });
+        
+        // Add hover effects
+        this.soundButton.on('pointerover', () => {
+            this.soundButton.setScale(1.1);
+        });
+        
+        this.soundButton.on('pointerout', () => {
+            this.soundButton.setScale(1.0);
+        });
+        
+        console.log('Sound button created');
+    }
+
+    getSoundButtonText() {
+        return this.soundEnabled ? 'SOUND: ON' : 'SOUND: OFF';
+    }
+
+    getSoundButtonColor() {
+        return this.soundEnabled ? '#00ff00' : '#ff0000';
+    }
+
+    toggleSound() {
+        console.log('Sound button clicked, current state:', this.soundEnabled);
+        
+        // If this is the first interaction and audio is locked, unlock it
+        if (this.sound.locked) {
+            console.log('Unlocking audio on first interaction');
+            this.sound.unlock();
+            this.audioUnlocked = true;
+        }
+        
+        // Toggle sound state
+        this.soundEnabled = !this.soundEnabled;
+        
+        // Save preference to localStorage
+        try {
+            localStorage.setItem('soundEnabled', this.soundEnabled.toString());
+            console.log('Sound preference saved:', this.soundEnabled);
+        } catch (error) {
+            console.warn('Could not save sound preference to localStorage:', error);
+        }
+        
+        // Update button appearance
+        this.updateSoundButton();
+        
+        // Update audio status display
+        this.updateAudioStatus();
+        
+        console.log('Sound toggled to:', this.soundEnabled);
+    }
+
+    updateSoundButton() {
+        if (this.soundButton) {
+            this.soundButton.setText(this.getSoundButtonText());
+            this.soundButton.setFill(this.getSoundButtonColor());
+        }
+    }
+
+    updateAudioStatus() {
+        const locked = this.sound.locked;
+        const contextState = this.sound.context ? this.sound.context.state : 'unknown';
+        
+        // Audio status logging only (no visual display)
+        if (locked) {
+            console.log('Audio: LOCKED - Click sound button to unlock');
+        } else {
+            console.log(`Audio: UNLOCKED (${contextState})`);
+        }
+    }
+
+    setupAudioUnlock() {
+        // Handle Chrome autoplay policy
+        if (this.sound.locked) {
+            console.log('Audio is locked, waiting for user interaction to unlock');
+            
+            // Add one-time unlock listener
+            this.input.once('pointerdown', () => {
+                console.log('User interaction detected, attempting to unlock audio');
+                this.sound.unlock();
+                this.audioUnlocked = true;
+                console.log('Audio unlock attempted, locked status:', this.sound.locked);
+                this.updateAudioStatus();
+            });
+        } else {
+            console.log('Audio is already unlocked');
+            this.audioUnlocked = true;
+            this.updateAudioStatus();
+        }
     }
 
     setupInputSystem() {
@@ -186,6 +293,72 @@ export class Gameplay extends Phaser.Scene {
         }
     }
 
+    playManagedSound(soundKey, volume = 1.0) {
+        console.log(`Attempting to play sound: ${soundKey} at volume ${volume}`);
+        console.log('Sound enabled:', this.soundEnabled);
+        console.log('Audio locked status:', this.sound.locked);
+        console.log('Audio unlocked flag:', this.audioUnlocked);
+        
+        // Check if sound is enabled by user
+        if (!this.soundEnabled) {
+            console.log('Sound is disabled by user, not playing');
+            return null;
+        }
+        
+        // Check if audio is available
+        if (this.sound.locked) {
+            console.warn('Audio is locked by browser policy, cannot play sound');
+            return null;
+        }
+        
+        // Check if sound exists
+        if (!this.cache.audio.exists(soundKey)) {
+            console.error(`Sound '${soundKey}' not found in cache`);
+            return null;
+        }
+        
+        try {
+            // Remove finished sounds from active list
+            this.activeSounds = this.activeSounds.filter(sound => sound.isPlaying);
+            
+            // If we're at the limit, stop the oldest sound
+            if (this.activeSounds.length >= this.maxConcurrentSounds) {
+                const oldestSound = this.activeSounds.shift();
+                if (oldestSound && oldestSound.isPlaying) {
+                    oldestSound.stop();
+                }
+            }
+            
+            // Create and play the new sound
+            const sound = this.sound.add(soundKey, { volume });
+            console.log('Sound object created:', sound);
+            
+            // Add event listeners for debugging
+            sound.once('play', () => {
+                console.log(`Sound '${soundKey}' started playing`);
+            });
+            
+            sound.once('complete', () => {
+                console.log(`Sound '${soundKey}' finished playing`);
+            });
+            
+            sound.once('stop', () => {
+                console.log(`Sound '${soundKey}' was stopped`);
+            });
+            
+            // Attempt to play
+            const playResult = sound.play();
+            console.log('Play result:', playResult);
+            
+            this.activeSounds.push(sound);
+            return sound;
+            
+        } catch (error) {
+            console.error('Error playing sound:', error);
+            return null;
+        }
+    }
+
     hitTarget(target) {
         // Prevent multiple hits on same target
         if (target.isBeingDestroyed) {
@@ -197,6 +370,9 @@ export class Gameplay extends Phaser.Scene {
         
         // Set flag to prevent miss detection
         this.clickedOnTarget = true;
+        
+        // Play explosion sound
+        this.playManagedSound('explosion', 0.7);
         
         // Update score
         this.score += this.hitPoints;
@@ -231,15 +407,18 @@ export class Gameplay extends Phaser.Scene {
             this.removeTarget(target, true);
         });
         
-        console.log(`Target hit! Score: ${this.score} (+${this.hitPoints})`);
+        console.log(`Target hit! Score: ${this.score} (+${this.hitPoints}) - Explosion sound played`);
     }
 
     handleMiss(pointer) {
+        // Play click sound for miss
+        this.playManagedSound('click', 0.5);
+        
         // Apply miss penalty
         this.score = Math.max(this.minScore, this.score + this.missPoints);
         this.updateScoreDisplay();
         
-        console.log(`Miss! Score: ${this.score} (${this.missPoints})`);
+        console.log(`Miss! Score: ${this.score} (${this.missPoints}) - Click sound played`);
         
         // Optional: Add visual feedback for miss
         // Could add a brief red flash or miss indicator here
@@ -279,8 +458,5 @@ export class Gameplay extends Phaser.Scene {
                 this.removeTarget(target, false);
             }
         }
-        
-        // Update development displays
-        this.targetCountText.setText(`Targets: ${this.targets.length}/${this.maxTargets}`);
     }
 }
