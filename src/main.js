@@ -1,18 +1,20 @@
 import { Start } from './scenes/Start.js';
 import { Gameplay } from './scenes/Gameplay.js';
+import { GameOver } from './scenes/GameOver.js';
 
 const config = {
     type: Phaser.AUTO,
-    title: 'Overlord Rising',
-    description: '',
+    title: 'Click Target Game',
+    description: 'Progressive survival reaction game',
     parent: 'game-container',
     width: 1280,
     height: 720,
     backgroundColor: '#000000',
     pixelArt: false,
     scene: [
-        Gameplay
-        // Start - temporarily disabled for Phase 1 development
+        Start,
+        Gameplay,
+        GameOver
     ],
     scale: {
         mode: Phaser.Scale.FIT,
@@ -21,4 +23,3 @@ const config = {
 }
 
 new Phaser.Game(config);
-            

@@ -56,6 +56,72 @@ class TargetFactory {
     return new Target(scene, x, y);
   }
 }
+}
+```
+
+### Asset Management Pattern
+
+```javascript
+// Proper asset loading with unique keys per scene
+// Start Scene
+preload() {
+    this.load.image('background-start', 'assets/space.png');
+}
+
+// Gameplay Scene  
+preload() {
+    this.load.image('background', 'assets/bg_layer1.png');
+    this.load.image('target', 'assets/crosshair067.png');
+    this.load.audio('click', 'assets/click_004.wav');
+}
+
+// GameOver Scene
+preload() {
+    this.load.image('background-gameover', 'assets/space.png');
+}
+```
+
+### Scene Transition Pattern
+
+```javascript
+// Fade transition implementation
+startGame() {
+    // Fade out current scene
+    this.cameras.main.fadeOut(500, 0, 0, 0);
+    
+    // Start new scene after fade completes
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('Gameplay');
+    });
+}
+
+// Fade in when scene starts
+create() {
+    // Scene setup code...
+    
+    // Fade in effect
+    this.cameras.main.fadeIn(500, 0, 0, 0);
+}
+```
+
+### Personal Best Tracking Pattern
+
+```javascript
+// localStorage integration for record keeping
+class PersonalBestManager {
+  loadPersonalBest() {
+    return parseInt(localStorage.getItem('clickTargetPersonalBest')) || 0;
+  }
+
+  checkNewRecord(hits) {
+    const currentBest = this.loadPersonalBest();
+    if (hits > currentBest) {
+      localStorage.setItem('clickTargetPersonalBest', hits.toString());
+      return true; // New record!
+    }
+    return false;
+  }
+}
 ```
 
 ### Observer Pattern (Hits/Life/Timers)
