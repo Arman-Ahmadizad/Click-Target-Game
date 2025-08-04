@@ -16,9 +16,10 @@ export class GameOver extends Phaser.Scene {
   }
 
   create() {
-    // Add static background
-    this.background = this.add.image(640, 360, "background-gameover");
-    this.background.setDisplaySize(1280, 720);
+    // Add static background (responsive)
+    this.background = this.add.image(0, 0, "background-gameover");
+    this.background.setOrigin(0, 0);
+    this.background.setDisplaySize(this.cameras.main.width, this.cameras.main.height);
 
     // Initialize sound state and create sound button
     this.initializeSoundState();
@@ -28,43 +29,43 @@ export class GameOver extends Phaser.Scene {
     this.personalBest = this.loadPersonalBest();
     this.isNewRecord = this.checkNewRecord(this.finalHits);
 
-    // Add game over title
+    // Add game over title (responsive center)
     this.add
-      .text(640, 180, "GAME OVER", {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.25, "GAME OVER", {
         ...fontStyles.title,
         fill: "#ff0000",
       })
       .setOrigin(0.5, 0.5);
 
-    // Add current hits display
+    // Add current hits display (responsive center)
     this.add
-      .text(640, 280, `HITS: ${this.finalHits}`, {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.4, `HITS: ${this.finalHits}`, {
         ...fontStyles.body,
         fill: "#ffffff",
       })
       .setOrigin(0.5, 0.5);
 
-    // Add personal best display
+    // Add personal best display (responsive center)
     this.add
-      .text(640, 320, `PERSONAL BEST: ${this.personalBest}`, {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.45, `PERSONAL BEST: ${this.personalBest}`, {
         ...fontStyles.body,
         fill: "#ffff00",
       })
       .setOrigin(0.5, 0.5);
 
-    // Add new record indicator if applicable
+    // Add new record indicator if applicable (responsive center)
     if (this.isNewRecord) {
       this.add
-        .text(640, 360, "NEW RECORD!", {
+        .text(this.cameras.main.width / 2, this.cameras.main.height * 0.5, "NEW RECORD!", {
           ...fontStyles.body,
           fill: "#00ff00",
         })
         .setOrigin(0.5, 0.5);
     }
 
-    // Add play again button
+    // Add play again button (responsive center)
     this.playAgainButton = this.add
-      .text(640, 450, "PLAY AGAIN", {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.65, "PLAY AGAIN", {
         ...fontStyles.button,
         fill: "#00ff00",
       })
@@ -87,9 +88,9 @@ export class GameOver extends Phaser.Scene {
       this.playAgainButton.setFill("#00ff00");
     });
 
-    // Add back to menu button
+    // Add back to menu button (responsive center)
     this.menuButton = this.add
-      .text(640, 520, "MAIN MENU", {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.75, "MAIN MENU", {
         ...fontStyles.button,
         fill: "#ffffff",
       })

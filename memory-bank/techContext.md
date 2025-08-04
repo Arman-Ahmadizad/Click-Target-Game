@@ -93,12 +93,21 @@ preload() {
 - **Memory Usage**: Under 50MB peak usage
 - **Battery**: Efficient mobile battery usage
 
-### Mobile Considerations
+### Responsive Design Implementation
 
-- **Touch Events**: Primary input method on mobile
-- **Screen Sizes**: Responsive design for 320px to 1920px+
-- **Orientation**: Both portrait and landscape support
-- **Performance**: Throttled on older mobile devices
+- **Phaser Scale Mode**: RESIZE mode with dynamic dimensions
+- **Viewport Management**: HTML meta viewport optimization
+- **Orientation Handling**: Multiple detection methods for device rotation
+- **Device Detection**: Screen size and touch capability based scaling
+- **CSS Media Queries**: Responsive styling and layout control
+
+### Mobile Optimization
+
+- **Touch Events**: Optimized for mobile touch interaction
+- **Target Sizing**: Device-specific scaling (Mobile: 1.2x, Tablet: 1.0x, Desktop: 0.8x)
+- **Orientation Enforcement**: Landscape mode prompts for mobile/tablet devices
+- **Performance**: Efficient rendering for mobile devices
+- **Viewport Fixes**: iOS Safari specific viewport handling
 
 ## Coding Standards
 
@@ -169,6 +178,108 @@ preload() {
 - **Phaser Debug**: Built-in debug features
 - **Console Logging**: Structured logging approach
 - **Visual Debugging**: On-screen debug information
+
+## Technical Implementation Details
+
+### Responsive System Architecture
+
+```javascript
+// Enhanced resize handling (src/main.js)
+function handleResize() {
+    setTimeout(() => {
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        console.log(`Resizing game to: ${newWidth}x${newHeight}`);
+        
+        game.scale.resize(newWidth, newHeight);
+        game.scale.refresh(); // Force refresh for mobile compatibility
+    }, 150);
+}
+
+// Multiple orientation change detection methods
+window.addEventListener('orientationchange', () => {
+    // Progressive timeout attempts for different mobile browsers
+    setTimeout(handleResize, 100);
+    setTimeout(handleResize, 300);
+    setTimeout(handleResize, 500);
+});
+
+// Modern screen orientation API
+if (screen && screen.orientation) {
+    screen.orientation.addEventListener('change', handleResize);
+}
+```
+
+### Device-Specific Scaling System
+
+```javascript
+// Dynamic target sizing (src/scenes/Gameplay.js)
+getDeviceSpecificTargetScale() {
+    const screenWidth = this.cameras.main.width;
+    const isMobile = screenWidth <= 768 || 
+        (this.input.activePointer && this.input.activePointer.wasTouch);
+    const isTablet = screenWidth > 768 && screenWidth <= 1024;
+    
+    if (isMobile) return 1.2;      // Larger targets for touch interaction
+    else if (isTablet) return 1.0; // Medium targets for tablets
+    else return 0.8;               // Smaller targets for desktop precision
+}
+
+// Scene resize handler with target scale updates
+handleResize(gameSize) {
+    // Update all existing targets with new device-appropriate scales
+    this.targets.forEach(target => {
+        if (target && target.active) {
+            const newScale = this.getDeviceSpecificTargetScale();
+            target.setScale(newScale);
+        }
+    });
+}
+```
+
+### CSS Responsive Controls
+
+```css
+/* Landscape enforcement for mobile and tablets (up to 1024px) */
+@media screen and (max-width: 1024px) and (orientation: portrait) {
+    body::before {
+        content: "Please rotate your device to landscape mode for the best gaming experience";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1000;
+        transition: opacity 0.3s ease;
+    }
+    
+    #game-container {
+        filter: blur(3px);
+        pointer-events: none;
+        transition: filter 0.3s ease;
+    }
+}
+
+/* Smooth transitions during orientation changes */
+body, #game-container, canvas {
+    transition: all 0.3s ease;
+}
+
+/* Fixed positioning to prevent content jumping */
+@media screen and (max-width: 1024px) {
+    #game-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+}
+```
 
 ## Integration Points
 

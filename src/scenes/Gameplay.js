@@ -51,9 +51,10 @@ export class Gameplay extends Phaser.Scene {
   }
 
   create() {
-    // Set up background
-    this.background = this.add.image(640, 360, "background");
-    this.background.setDisplaySize(1280, 720);
+    // Set up background to cover entire screen
+    this.background = this.add.image(0, 0, "background");
+    this.background.setOrigin(0, 0);
+    this.background.setDisplaySize(this.cameras.main.width, this.cameras.main.height);
 
     // Initialize game variables
     this.hits = 0; // Track successful target hits
@@ -82,13 +83,8 @@ export class Gameplay extends Phaser.Scene {
     this.lastSpawnTime = 0;
     this.currentSpawnRate = this.initialSpawnRate;
 
-    // Safe spawn boundaries (50px margin from edges)
-    this.spawnBounds = {
-      minX: 50 + 88, // 88 is half ship width
-      maxX: 1280 - 50 - 88,
-      minY: 50 + 48, // 48 is half ship height
-      maxY: 720 - 50 - 48,
-    };
+    // Safe spawn boundaries (responsive margins)
+    this.updateSpawnBounds();
 
     // Set up input system
     this.setupInputSystem();
@@ -104,9 +100,9 @@ export class Gameplay extends Phaser.Scene {
       repeat: 0,
     });
 
-    // Placeholder hits display
+    // Placeholder hits display (responsive positioning)
     this.hitsText = this.add
-      .text(1230, 50, "Hits: 0", fontStyles.body)
+      .text(this.cameras.main.width - 50, 50, "Hits: 0", fontStyles.body)
       .setOrigin(1, 0);
 
     // Add audio unlock handler for Chrome autoplay policy
@@ -123,6 +119,67 @@ export class Gameplay extends Phaser.Scene {
 
     // Fade in effect
     this.cameras.main.fadeIn(500, 0, 0, 0);
+
+    // Handle resize events
+    this.scale.on('resize', this.handleResize, this);
+  }
+
+  updateSpawnBounds() {
+    // Safe spawn boundaries (responsive margins)
+    const margin = 50;
+    const shipHalfWidth = 88;
+    const shipHalfHeight = 48;
+    
+    this.spawnBounds = {
+      minX: margin + shipHalfWidth,
+      maxX: this.cameras.main.width - margin - shipHalfWidth,
+      minY: margin + shipHalfHeight,
+      maxY: this.cameras.main.height - margin - shipHalfHeight,
+    };
+  }
+
+  handleResize(gameSize) {
+    console.log('Scene resize event:', gameSize);
+    
+    // Update background size
+    if (this.background) {
+      this.background.setDisplaySize(gameSize.width, gameSize.height);
+    }
+
+    // Update spawn boundaries
+    this.updateSpawnBounds();
+
+    // Update UI positions
+    if (this.hitsText) {
+      this.hitsText.setPosition(gameSize.width - 50, 50);
+    }
+
+    if (this.soundButton) {
+      this.soundButton.setPosition(50, 50);
+    }
+
+    // Update life progress bar position
+    if (this.lifeBarBg && this.lifeBarFill) {
+      const barX = gameSize.width / 2;
+      const barY = gameSize.height - 50;
+      
+      this.lifeBarBg.setPosition(barX, barY);
+      this.lifeBarFill.setPosition(barX - this.lifeBarWidth / 2, barY);
+      
+      // Store updated positions
+      this.lifeBarX = barX;
+      this.lifeBarY = barY;
+    }
+
+    // Force update target scales for device-specific sizing
+    this.targets.forEach(target => {
+      if (target && target.active) {
+        const newScale = this.getDeviceSpecificTargetScale();
+        target.setScale(newScale);
+      }
+    });
+
+    console.log('Scene resize complete');
   }
 
   initializeLifeSystem() {
@@ -212,9 +269,9 @@ export class Gameplay extends Phaser.Scene {
   }
 
   showDifficultyIncrease() {
-    // Create temporary text to show difficulty increase
+    // Create temporary text to show difficulty increase (responsive positioning)
     const difficultyText = this.add
-      .text(640, 300, `DIFFICULTY LEVEL ${this.currentDifficultyLevel}`, {
+      .text(this.cameras.main.width / 2, this.cameras.main.height / 2 - 50, `DIFFICULTY LEVEL ${this.currentDifficultyLevel}`, {
         ...fontStyles.body,
         fill: "#ffff00",
         fontSize: "20px",
@@ -225,7 +282,7 @@ export class Gameplay extends Phaser.Scene {
     this.tweens.add({
       targets: difficultyText,
       alpha: 0,
-      y: 250,
+      y: this.cameras.main.height / 2 - 100,
       duration: 2000,
       ease: "Power2",
       onComplete: () => {
@@ -235,11 +292,11 @@ export class Gameplay extends Phaser.Scene {
   }
 
   createLifeProgressBar() {
-    // Progress bar dimensions and position
+    // Progress bar dimensions and position (responsive)
     const barWidth = 300;
     const barHeight = 25;
-    const barX = 640; // Center of 1280px width
-    const barY = 670; // Bottom of screen (720px height - 50px margin)
+    const barX = this.cameras.main.width / 2; // Center horizontally
+    const barY = this.cameras.main.height - 50; // Bottom margin
 
     // Create progress bar background
     this.lifeBarBg = this.add.rectangle(
@@ -497,7 +554,10 @@ export class Gameplay extends Phaser.Scene {
     // Create target sprite
     const target = this.add.sprite(x, y, "ship");
     target.setFrame(0); // Use first frame of ship sprite
-    target.setScale(0.8); // Make targets slightly smaller
+    
+    // Device-specific target sizing for better mobile experience
+    const targetScale = this.getDeviceSpecificTargetScale();
+    target.setScale(targetScale);
 
     // Make target interactive
     target.setInteractive();
@@ -519,6 +579,28 @@ export class Gameplay extends Phaser.Scene {
 
     `Target spawned at (${x}, ${y}). Active targets: ${this.targets.length}`;
     return target;
+  }
+
+  getDeviceSpecificTargetScale() {
+    const screenWidth = this.cameras.main.width;
+    const screenHeight = this.cameras.main.height;
+    
+    // Detect device type based on screen size and touch capability
+    const isMobile = screenWidth <= 768 || (this.input.activePointer && this.input.activePointer.wasTouch);
+    const isTablet = screenWidth > 768 && screenWidth <= 1024;
+    const isDesktop = screenWidth > 1024;
+    
+    // Base scale factors for different devices
+    if (isMobile) {
+      // Larger targets for mobile devices (easier to tap)
+      return 1.2;
+    } else if (isTablet) {
+      // Medium targets for tablets
+      return 1.0;
+    } else {
+      // Smaller targets for desktop (more precise mouse control)
+      return 0.8;
+    }
   }
 
   removeTarget(target, wasHit = false) {

@@ -11,36 +11,37 @@ export class Start extends Phaser.Scene {
   }
 
   create() {
-    // Add static background
-    this.background = this.add.image(640, 360, "background-start");
-    this.background.setDisplaySize(1280, 720);
+    // Add static background (responsive)
+    this.background = this.add.image(0, 0, "background-start");
+    this.background.setOrigin(0, 0);
+    this.background.setDisplaySize(this.cameras.main.width, this.cameras.main.height);
 
-    // Add game title
+    // Add game title (responsive center)
     this.add
-      .text(640, 200, "CLICK TARGET GAME", {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.25, "CLICK TARGET GAME", {
         ...fontStyles.title,
         fill: "#ffffff",
       })
       .setOrigin(0.5, 0.5);
 
-    // Add game instructions
+    // Add game instructions (responsive center)
     this.add
-      .text(640, 300, "Click targets to survive", {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.4, "Click targets to survive", {
         ...fontStyles.body,
         fill: "#ffffff",
       })
       .setOrigin(0.5, 0.5);
 
     this.add
-      .text(640, 340, "Game gets harder over time", {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.45, "Game gets harder over time", {
         ...fontStyles.body,
         fill: "#ffffff",
       })
       .setOrigin(0.5, 0.5);
 
-    // Add start button
+    // Add start button (responsive center)
     this.startButton = this.add
-      .text(640, 450, "TAP TO START", {
+      .text(this.cameras.main.width / 2, this.cameras.main.height * 0.65, "TAP TO START", {
         ...fontStyles.button,
         fill: "#00ff00",
       })
