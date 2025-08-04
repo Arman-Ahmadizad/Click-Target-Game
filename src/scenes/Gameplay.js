@@ -54,8 +54,7 @@ export class Gameplay extends Phaser.Scene {
         this.background.setDisplaySize(1280, 720);
 
         // Initialize game variables
-        this.score = 0;
-        this.timeLeft = 30;
+        this.hits = 0; // Track successful target hits
         this.targets = [];
         this.gameStartTime = this.time.now;
         
@@ -78,11 +77,6 @@ export class Gameplay extends Phaser.Scene {
         this.lastSpawnTime = 0;
         this.currentSpawnRate = this.initialSpawnRate;
         
-        // Scoring configuration
-        this.hitPoints = 10;
-        this.missPoints = -2;
-        this.minScore = 0;
-        
         // Safe spawn boundaries (50px margin from edges)
         this.spawnBounds = {
             minX: 50 + 88, // 88 is half ship width
@@ -102,11 +96,8 @@ export class Gameplay extends Phaser.Scene {
             repeat: 0
         });
 
-        // Placeholder score display
-        this.scoreText = this.add.text(50, 100, 'Score: 0', fontStyles.body);
-
-        // Placeholder timer display
-        this.timerText = this.add.text(1230, 50, 'Time: 30', fontStyles.body).setOrigin(1, 0);
+        // Placeholder hits display
+        this.hitsText = this.add.text(1230, 50, 'Hits: 0', fontStyles.body).setOrigin(1, 0);
 
         
         
@@ -519,9 +510,9 @@ export class Gameplay extends Phaser.Scene {
         // Play explosion sound
         this.playManagedSound('explosion', 0.7);
         
-        // Update score
-        this.score += this.hitPoints;
-        this.updateScoreDisplay();
+        // Increment hits counter
+        this.hits++;
+        this.updateHitsDisplay();
         
         // Add life for hitting target
         const config = this.LIFE_CONFIG[this.currentDifficulty];
@@ -556,29 +547,25 @@ export class Gameplay extends Phaser.Scene {
             this.removeTarget(target, true);
         });
         
-        (`Target hit! Score: ${this.score} (+${this.hitPoints}), Life: +${config.hitBonus} - Explosion sound played`);
+        (`Target hit! Hits: ${this.hits}, Life: +${config.hitBonus} - Explosion sound played`);
     }
 
     handleMiss(pointer) {
         // Play click sound for miss
         this.playManagedSound('click', 0.5);
         
-        // Apply miss penalty
-        this.score = Math.max(this.minScore, this.score + this.missPoints);
-        this.updateScoreDisplay();
-        
         // Remove life for missing
         const config = this.LIFE_CONFIG[this.currentDifficulty];
         this.removeLife(config.missPenalty);
         
-        (`Miss! Score: ${this.score} (${this.missPoints}), Life: -${config.missPenalty} - Click sound played`);
+        (`Miss! Life: -${config.missPenalty} - Click sound played`);
         
         // Optional: Add visual feedback for miss
         // Could add a brief red flash or miss indicator here
     }
 
-    updateScoreDisplay() {
-        this.scoreText.setText(`Score: ${this.score}`);
+    updateHitsDisplay() {
+        this.hitsText.setText(`Hits: ${this.hits}`);
     }
 
     updateSpawnRate() {

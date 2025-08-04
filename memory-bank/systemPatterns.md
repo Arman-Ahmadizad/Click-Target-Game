@@ -31,11 +31,12 @@ Game Structure:
 - Manages lifecycle and cleanup
 - Reusable across different game modes
 
-**UI Components:**
+### UI Components:
 
-- Score display component
-- Timer component
-- Button components for interactions
+- **Hits Counter Component**: Displays successful target hits in top-right corner
+- **Life Progress Bar Component**: Visual life management display
+- **Sound Toggle Component**: Audio control button
+- **Button Components**: For interactions and menu navigation
 
 ### Event-Driven Communication
 
@@ -57,11 +58,11 @@ class TargetFactory {
 }
 ```
 
-### Observer Pattern (Score/Timers)
+### Observer Pattern (Hits/Life/Timers)
 
-- Score system observes target hits
-- Timer system broadcasts time updates
-- Game state observers for UI updates
+- **Hits System**: Observes target hits and updates counter
+- **Life System**: Broadcasts life changes to UI components
+- **Game State Observers**: For UI updates and state transitions
 
 ### State Pattern (Game States)
 
@@ -70,6 +71,134 @@ class TargetFactory {
 - Clear state transitions with validation
 
 ## Technical Implementation Patterns
+
+### Input Handling System
+
+```javascript
+// Unified input handler
+class InputHandler {
+  constructor(scene) {
+    this.scene = scene;
+    this.setupInput();
+  }
+
+  setupInput() {
+    // Handle both mouse and touch
+    this.scene.input.on("pointerdown", this.handleInput, this);
+  }
+
+  handleInput(pointer) {
+    // Unified input processing
+  }
+}
+```
+
+### Simplified Tracking System
+
+```javascript
+// Hit tracking without complex scoring
+class HitTracker {
+  constructor() {
+    this.hits = 0;
+  }
+
+  recordHit() {
+    this.hits++;
+    this.updateDisplay();
+  }
+
+  getHitCount() {
+    return this.hits;
+  }
+}
+```
+
+## Technical Implementation Patterns
+### Progressive Difficulty System
+
+```javascript
+// Dynamic difficulty scaling based on hit milestones
+class DifficultyManager {
+  constructor() {
+    this.baseSpawnRate = 2000;
+    this.minSpawnRate = 200;
+    this.baseTargetCount = 4;
+    this.maxTargetCount = 12;
+    this.baseTargetLifespan = 4000;
+    this.minTargetLifespan = 1500;
+  }
+
+  calculateDifficulty(hits) {
+    const difficultyFactor = Math.floor(hits / 10); // Every 10 hits
+    return {
+      spawnRate: Math.max(this.minSpawnRate, this.baseSpawnRate - (difficultyFactor * 150)),
+      targetCount: Math.min(this.maxTargetCount, this.baseTargetCount + difficultyFactor),
+      targetLifespan: Math.max(this.minTargetLifespan, this.baseTargetLifespan - (difficultyFactor * 200))
+    };
+  }
+}
+```
+
+### Performance Monitoring System
+
+```javascript
+// FPS monitoring and mobile optimization
+class PerformanceMonitor {
+  constructor() {
+    this.frameCount = 0;
+    this.lastTime = performance.now();
+    this.fps = 60;
+  }
+
+  update() {
+    const currentTime = performance.now();
+    this.frameCount++;
+    
+    if (currentTime - this.lastTime >= 1000) {
+      this.fps = this.frameCount;
+      this.frameCount = 0;
+      this.lastTime = currentTime;
+      
+      // Auto-adjust quality based on performance
+      if (this.fps < 45) {
+        this.reduceQuality();
+      }
+    }
+  }
+
+  reduceQuality() {
+    // Reduce target count, effects, or other performance-heavy features
+  }
+}
+```
+
+### Record Tracking System
+
+```javascript
+// Persistent high score and personal best tracking
+class RecordManager {
+  constructor() {
+    this.personalBest = this.loadPersonalBest();
+  }
+
+  loadPersonalBest() {
+    return parseInt(localStorage.getItem('clickTargetPersonalBest')) || 0;
+  }
+
+  checkNewRecord(hits) {
+    if (hits > this.personalBest) {
+      this.personalBest = hits;
+      localStorage.setItem('clickTargetPersonalBest', hits.toString());
+      return true; // New record!
+    }
+    return false;
+  }
+
+  getPersonalBest() {
+    return this.personalBest;
+  }
+}
+```
 
 ### Input Handling System
 
