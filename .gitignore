@@ -136,6 +136,6 @@ Thumbs.db
 
 # The memory-bank directory contains project notes.
 # If you do not want to track these in git, uncomment the following line:
- memory-bank/
+memory-bank/
 plans/
 forge.yaml
