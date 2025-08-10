@@ -44,6 +44,28 @@ export class Start extends Phaser.Scene {
     this.initializeSoundState();
     this.createSoundButton();
 
+    this.fullscreenButton = this.add.text(0, 0, "FULLSCREEN", {
+        ...fontStyles.button,
+        fill: "#ffffff",
+      }).setOrigin(1, 0);
+
+    this.fullscreenButton.setInteractive();
+    this.fullscreenButton.on("pointerup", () => {
+        if (this.scale.isFullscreen) {
+            this.scale.stopFullscreen();
+        } else {
+            this.scale.startFullscreen();
+        }
+    });
+
+    this.scale.on('fullscreenchange', (isFullscreen) => {
+        if (isFullscreen) {
+            this.fullscreenButton.setText("EXIT FULLSCREEN");
+        } else {
+            this.fullscreenButton.setText("FULLSCREEN");
+        }
+    });
+
     this.scale.on('resize', this.resize, this);
     this.resize({ width: this.cameras.main.width, height: this.cameras.main.height });
 
@@ -60,6 +82,9 @@ export class Start extends Phaser.Scene {
     this.instructionsText2.setPosition(width / 2, height * 0.45);
     this.startButton.setPosition(width / 2, height * 0.65);
     this.soundButton.setPosition(50, 50);
+    if (this.fullscreenButton) {
+        this.fullscreenButton.setPosition(width - 50, 50);
+    }
   }
 
   startGame() {

@@ -2,6 +2,8 @@ import { Start } from './scenes/Start.js';
 import { Gameplay } from './scenes/Gameplay.js';
 import { GameOver } from './scenes/GameOver.js';
 
+let game;
+
 function launchGame() {
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -9,8 +11,9 @@ function launchGame() {
     if (window.visualViewport) {
         width = window.visualViewport.width;
         height = window.visualViewport.height;
-    console.log(`Launching game with dimensions: ${width}x${height}`);
     }
+
+    console.log(`Launching game with dimensions: ${width}x${height}`);
 
     const config = {
         type: Phaser.AUTO,
@@ -40,9 +43,27 @@ function launchGame() {
         }
     };
 
-    const game = new Phaser.Game(config);
+    game = new Phaser.Game(config);
 }
 
 window.addEventListener('load', () => {
     setTimeout(launchGame, 100);
+});
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        if (game) {
+            let newWidth = window.innerWidth;
+            let newHeight = window.innerHeight;
+
+            if (window.visualViewport) {
+                newWidth = window.visualViewport.width;
+                newHeight = window.visualViewport.height;
+            }
+            
+            game.scale.resize(newWidth, newHeight);
+        }
+    }, 200);
 });
