@@ -2,7 +2,7 @@
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <title>Click Target Game</title>
         <style>
             /* Reset CSS: Please avoid making changes here unless you know what you're doing :) */
@@ -79,21 +79,9 @@
 
             /* Prevent content jumping during orientation change */
             @media screen and (max-width: 1024px) {
+                /* Remove position fixed that may cause zoom issues */
                 body {
                     overflow: hidden;
-                    position: fixed;
-                    width: 100%;
-                    height: 100%;
-                }
-                
-                #game-container {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    /* Use dvh (dynamic viewport height) for better mobile browser support */
-                    height: 100dvh;
                 }
             }
 

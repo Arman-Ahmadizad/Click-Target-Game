@@ -40,8 +40,15 @@ const game = new Phaser.Game(config);
 
 // Ensure correct initial dimensions after game creation
 game.events.once('ready', () => {
-    console.log('Game ready - checking initial dimensions...');
+    console.log('Game ready - checking initial dimensions and zoom state...');
     logViewportInfo('Game Ready');
+    
+    // Detect initial browser zoom
+    const initialZoom = detectBrowserZoom();
+    if (initialZoom !== 1.0) {
+        console.log(`Initial zoom detected: ${initialZoom}, attempting reset...`);
+        resetBrowserZoom();
+    }
     
     // Fix any initial dimension mismatch
     const currentWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
@@ -74,16 +81,66 @@ function logViewportInfo(context) {
         console.log(`game.scale.gameSize.width: ${game.scale.gameSize.width}`);
         console.log(`game.scale.gameSize.height: ${game.scale.gameSize.height}`);
     }
+    
+    // Add zoom detection
+    detectBrowserZoom();
+    
     console.log('================');
 }
 
-// Simplified and more reliable resize handling function
+// Function to detect browser zoom level
+function detectBrowserZoom() {
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const zoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100;
+    const zoomLevel = Math.round((devicePixelRatio * zoom) * 100) / 100;
+    
+    console.log(`Browser zoom detection:`, {
+        devicePixelRatio,
+        zoom,
+        zoomLevel,
+        outerWidth: window.outerWidth,
+        innerWidth: window.innerWidth,
+        outerHeight: window.outerHeight,
+        innerHeight: window.innerHeight
+    });
+    
+    return zoomLevel;
+}
+
+// Function to reset browser zoom state by manipulating viewport meta tag
+function resetBrowserZoom() {
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        console.log('Resetting browser zoom state...');
+        
+        // Store original content
+        const originalContent = viewport.getAttribute('content');
+        
+        // Temporarily remove viewport constraints
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        
+        // Force layout recalculation
+        document.body.offsetHeight;
+        
+        // Restore original content after brief delay
+        setTimeout(() => {
+            viewport.setAttribute('content', originalContent);
+            // Force another layout recalculation
+            document.body.offsetHeight;
+        }, 10);
+    }
+}
+
+// Enhanced mobile-aware resize handling function with viewport reset
 function handleResize() {
     // Prevent multiple rapid resize calls
     clearTimeout(window.resizeTimeout);
     
     window.resizeTimeout = setTimeout(() => {
         logViewportInfo('Before Resize');
+        
+        // Force browser zoom reset by manipulating viewport meta tag
+        resetBrowserZoom();
         
         // Get current viewport dimensions
         let newWidth = window.innerWidth;

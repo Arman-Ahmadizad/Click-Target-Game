@@ -21,15 +21,15 @@ body {
 }
 
 #game-container {
-    width: 100vw;
-    height: 100vh;
-    /* Mobile viewport units for better browser support */
-    height: 100dvh; /* Dynamic viewport height */
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    /* Remove viewport units that may cause browser zoom conflicts */
+    width: 100%;
+    height: 100%;
+    display: block;
+    /* Remove flexbox centering that may trigger zoom */
     /* Prevent mobile browser UI interference */
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     overflow: hidden;
 }
 
@@ -54,33 +54,18 @@ canvas {
     transform-origin: top left !important;
 }
 
-/* iOS Safari specific fixes */
-@supports (-webkit-touch-callout: none) {
-    #game-container {
-        height: -webkit-fill-available;
-    }
-    
-    body {
-        position: fixed;
+/* Simplified mobile fixes - remove complex viewport manipulations */
+@media screen and (max-width: 1024px) {
+    html, body {
         width: 100%;
         height: 100%;
-    }
-}
-
-/* Android Chrome specific fixes */
-@media screen and (max-width: 1024px) {
-    html {
-        height: 100%;
         overflow: hidden;
-    }
-    
-    body {
-        min-height: 100vh;
-        min-height: -webkit-fill-available;
+        margin: 0;
+        padding: 0;
     }
     
     #game-container {
-        min-height: 100vh;
-        min-height: -webkit-fill-available;
+        width: 100%;
+        height: 100%;
     }
 }
