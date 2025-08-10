@@ -2,112 +2,156 @@ import { Start } from './scenes/Start.js';
 import { Gameplay } from './scenes/Gameplay.js';
 import { GameOver } from './scenes/GameOver.js';
 
+// Get initial viewport dimensions properly
+const initialWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+const initialHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
 const config = {
     type: Phaser.AUTO,
     title: 'Click Target Game',
     description: 'Progressive survival reaction game',
     parent: 'game-container',
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: initialWidth,
+    height: initialHeight,
     backgroundColor: '#000000',
     pixelArt: false,
+    antialias: true,
     scene: [
         Start,
         Gameplay,
         GameOver
     ],
     scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        mode: Phaser.Scale.NONE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: initialWidth,
+        height: initialHeight
     },
+    render: {
+        transparent: false,
+        clearBeforeRender: true,
+        preserveDrawingBuffer: false,
+        antialias: true,
+        pixelArt: false
+    }
 }
 
 const game = new Phaser.Game(config);
 
-// Enhanced mobile-aware resize handling function
+// Ensure correct initial dimensions after game creation
+game.events.once('ready', () => {
+    console.log('Game ready - checking initial dimensions...');
+    logViewportInfo('Game Ready');
+    
+    // Fix any initial dimension mismatch
+    const currentWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    
+    if (game.scale.width !== currentWidth || game.scale.height !== currentHeight) {
+        console.log('Initial dimension mismatch detected, correcting...');
+        game.scale.resize(currentWidth, currentHeight);
+        game.scale.refresh();
+        logViewportInfo('After Initial Correction');
+    }
+});
+
+// Debug function to log viewport information
+function logViewportInfo(context) {
+    console.log(`=== ${context} ===`);
+    console.log(`window.innerWidth: ${window.innerWidth}`);
+    console.log(`window.innerHeight: ${window.innerHeight}`);
+    console.log(`document.documentElement.clientWidth: ${document.documentElement.clientWidth}`);
+    console.log(`document.documentElement.clientHeight: ${document.documentElement.clientHeight}`);
+    
+    if (window.visualViewport) {
+        console.log(`visualViewport.width: ${window.visualViewport.width}`);
+        console.log(`visualViewport.height: ${window.visualViewport.height}`);
+    }
+    
+    if (game && game.scale) {
+        console.log(`game.scale.width: ${game.scale.width}`);
+        console.log(`game.scale.height: ${game.scale.height}`);
+        console.log(`game.scale.gameSize.width: ${game.scale.gameSize.width}`);
+        console.log(`game.scale.gameSize.height: ${game.scale.gameSize.height}`);
+    }
+    console.log('================');
+}
+
+// Simplified and more reliable resize handling function
 function handleResize() {
-    // Force a small delay to ensure viewport has updated
-    setTimeout(() => {
-        // Get actual viewport dimensions
+    // Prevent multiple rapid resize calls
+    clearTimeout(window.resizeTimeout);
+    
+    window.resizeTimeout = setTimeout(() => {
+        logViewportInfo('Before Resize');
+        
+        // Get current viewport dimensions
         let newWidth = window.innerWidth;
         let newHeight = window.innerHeight;
         
-        // Mobile browser viewport handling
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            // Use visual viewport if available (modern browsers)
-            if (window.visualViewport) {
-                newWidth = window.visualViewport.width;
-                newHeight = window.visualViewport.height;
-            } else {
-                // Fallback: Use document dimensions for better mobile compatibility
-                newHeight = Math.min(window.innerHeight, document.documentElement.clientHeight);
-            }
+        // For mobile browsers, use visual viewport when available
+        if (window.visualViewport) {
+            newWidth = window.visualViewport.width;
+            newHeight = window.visualViewport.height;
         }
         
-        console.log(`Resizing game to: ${newWidth}x${newHeight} (Mobile: ${isMobile})`);
+        console.log(`Orientation change: resizing to ${newWidth}x${newHeight}`);
         
-        // Update the game scale
+        // Direct canvas manipulation for immediate effect
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            canvas.style.width = `${newWidth}px`;
+            canvas.style.height = `${newHeight}px`;
+        }
+        
+        // Update Phaser scale configuration
         game.scale.resize(newWidth, newHeight);
         
-        // Force multiple refreshes for mobile compatibility
+        // Also update game size to ensure consistency
+        game.scale.setGameSize(newWidth, newHeight);
+        
+        // Force canvas to update
         game.scale.refresh();
         
-        // Additional refresh after short delay for mobile browsers
-        if (isMobile) {
-            setTimeout(() => {
+        // Double-check dimensions are correct after a brief delay
+        setTimeout(() => {
+            if (game.scale.width !== newWidth || game.scale.height !== newHeight) {
+                console.log('Dimensions still mismatched, forcing correction...');
+                game.scale.resize(newWidth, newHeight);
                 game.scale.refresh();
-            }, 100);
-        }
-    }, 150);
+            }
+            
+            // Final canvas size check
+            if (canvas) {
+                canvas.style.width = `${newWidth}px`;
+                canvas.style.height = `${newHeight}px`;
+            }
+            
+            logViewportInfo('After Resize (Final Check)');
+        }, 50);
+        
+        logViewportInfo('After Resize');
+        
+    }, 200); // Longer delay for more stable results
 }
 
 // Handle window resize events
 window.addEventListener('resize', handleResize);
 
-// Handle orientation change events for mobile with enhanced detection
+// Simplified orientation change handling
 window.addEventListener('orientationchange', () => {
-    console.log('Orientation change detected');
+    console.log('Orientation change detected - waiting for viewport to stabilize');
     
-    // Multiple attempts with increasing delays to handle different mobile browsers
-    setTimeout(handleResize, 100);
-    setTimeout(handleResize, 300);
-    setTimeout(handleResize, 500);
-    setTimeout(handleResize, 800); // Additional delay for stubborn browsers
-});
-
-// Additional orientation change detection using screen object
-if (screen && screen.orientation) {
-    screen.orientation.addEventListener('change', () => {
-        console.log('Screen orientation change detected');
+    // Single delayed call instead of multiple attempts
+    setTimeout(() => {
         handleResize();
-    });
-}
+    }, 300);
+});
 
 // Visual Viewport API support for modern mobile browsers
 if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
-        console.log('Visual viewport resize detected');
+        console.log('Visual viewport change detected');
         handleResize();
     });
 }
-
-// Enhanced mobile viewport change detection
-window.addEventListener('resize', () => {
-    // Check if this is a mobile device
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-        // Force viewport recalculation on mobile with improved method
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-            // Temporarily modify viewport to force refresh
-            const originalContent = viewport.getAttribute('content');
-            viewport.setAttribute('content', originalContent + ', minimal-ui');
-            setTimeout(() => {
-                viewport.setAttribute('content', originalContent);
-            }, 50);
-        }
-    }
-});

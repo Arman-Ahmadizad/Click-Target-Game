@@ -67,9 +67,14 @@
                 }
             }
 
-            /* Ensure smooth transitions during orientation changes */
-            body, #game-container, canvas {
+            /* Ensure smooth transitions during orientation changes - but exclude canvas */
+            body, #game-container {
                 transition: all 0.3s ease;
+            }
+            
+            /* Canvas should NOT have transitions as it interferes with Phaser rendering */
+            canvas {
+                transition: none !important;
             }
 
             /* Prevent content jumping during orientation change */

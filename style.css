@@ -35,9 +35,7 @@ body {
 
 canvas {
     display: block;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain;
+    /* Remove fixed sizing to let JavaScript handle it */
     /* Mobile-specific canvas optimizations */
     touch-action: none;
     -webkit-touch-callout: none;
@@ -49,6 +47,11 @@ canvas {
     -moz-user-drag: none;
     -o-user-drag: none;
     user-drag: none;
+    /* Ensure no transitions interfere with rendering */
+    transition: none !important;
+    /* Prevent any transform or scaling issues */
+    transform: none !important;
+    transform-origin: top left !important;
 }
 
 /* iOS Safari specific fixes */
