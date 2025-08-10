@@ -24,20 +24,42 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-// Enhanced resize handling function
+// Enhanced mobile-aware resize handling function
 function handleResize() {
     // Force a small delay to ensure viewport has updated
     setTimeout(() => {
-        const newWidth = window.innerWidth;
-        const newHeight = window.innerHeight;
+        // Get actual viewport dimensions
+        let newWidth = window.innerWidth;
+        let newHeight = window.innerHeight;
         
-        console.log(`Resizing game to: ${newWidth}x${newHeight}`);
+        // Mobile browser viewport handling
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // Use visual viewport if available (modern browsers)
+            if (window.visualViewport) {
+                newWidth = window.visualViewport.width;
+                newHeight = window.visualViewport.height;
+            } else {
+                // Fallback: Use document dimensions for better mobile compatibility
+                newHeight = Math.min(window.innerHeight, document.documentElement.clientHeight);
+            }
+        }
+        
+        console.log(`Resizing game to: ${newWidth}x${newHeight} (Mobile: ${isMobile})`);
         
         // Update the game scale
         game.scale.resize(newWidth, newHeight);
         
-        // Force a refresh of the scale manager
+        // Force multiple refreshes for mobile compatibility
         game.scale.refresh();
+        
+        // Additional refresh after short delay for mobile browsers
+        if (isMobile) {
+            setTimeout(() => {
+                game.scale.refresh();
+            }, 100);
+        }
     }, 150);
 }
 
@@ -52,6 +74,7 @@ window.addEventListener('orientationchange', () => {
     setTimeout(handleResize, 100);
     setTimeout(handleResize, 300);
     setTimeout(handleResize, 500);
+    setTimeout(handleResize, 800); // Additional delay for stubborn browsers
 });
 
 // Additional orientation change detection using screen object
@@ -62,19 +85,28 @@ if (screen && screen.orientation) {
     });
 }
 
-// Detect viewport changes on mobile (iOS Safari specific)
+// Visual Viewport API support for modern mobile browsers
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        console.log('Visual viewport resize detected');
+        handleResize();
+    });
+}
+
+// Enhanced mobile viewport change detection
 window.addEventListener('resize', () => {
     // Check if this is a mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-        // Force viewport recalculation on mobile
+        // Force viewport recalculation on mobile with improved method
         const viewport = document.querySelector('meta[name="viewport"]');
         if (viewport) {
-            const content = viewport.getAttribute('content');
-            viewport.setAttribute('content', content + ', user-scalable=no');
+            // Temporarily modify viewport to force refresh
+            const originalContent = viewport.getAttribute('content');
+            viewport.setAttribute('content', originalContent + ', minimal-ui');
             setTimeout(() => {
-                viewport.setAttribute('content', content);
+                viewport.setAttribute('content', originalContent);
             }, 50);
         }
     }

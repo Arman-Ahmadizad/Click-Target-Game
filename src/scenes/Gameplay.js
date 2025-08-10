@@ -585,22 +585,51 @@ export class Gameplay extends Phaser.Scene {
     const screenWidth = this.cameras.main.width;
     const screenHeight = this.cameras.main.height;
     
-    // Detect device type based on screen size and touch capability
-    const isMobile = screenWidth <= 768 || (this.input.activePointer && this.input.activePointer.wasTouch);
-    const isTablet = screenWidth > 768 && screenWidth <= 1024;
-    const isDesktop = screenWidth > 1024;
+    // Enhanced device detection with multiple criteria
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const devicePixelRatio = window.devicePixelRatio || 1;
     
-    // Base scale factors for different devices
-    if (isMobile) {
-      // Larger targets for mobile devices (easier to tap)
-      return 1.2;
+    // More precise device categorization
+    const isPhone = screenWidth <= 768 && (isTouchDevice || /mobile|android|iphone/i.test(userAgent));
+    const isTablet = screenWidth > 768 && screenWidth <= 1024 && (isTouchDevice || /tablet|ipad/i.test(userAgent));
+    const isDesktop = screenWidth > 1024 && !isTouchDevice;
+    
+    // Consider both screen size and pixel density for scaling
+    let baseScale = 1.0;
+    
+    if (isPhone) {
+      // Smaller targets for phones (reduced from 1.2 to 0.9)
+      baseScale = 0.9;
     } else if (isTablet) {
-      // Medium targets for tablets
-      return 1.0;
+      // Medium targets for tablets (reduced from 1.0 to 0.8)
+      baseScale = 0.8;
+    } else if (isDesktop) {
+      // Smaller targets for desktop precision
+      baseScale = 0.7;
     } else {
-      // Smaller targets for desktop (more precise mouse control)
-      return 0.8;
+      // Fallback based on screen width only
+      if (screenWidth <= 480) {
+        baseScale = 0.85; // Very small screens
+      } else if (screenWidth <= 768) {
+        baseScale = 0.9;  // Small screens
+      } else if (screenWidth <= 1024) {
+        baseScale = 0.8;  // Medium screens
+      } else {
+        baseScale = 0.7;  // Large screens
+      }
     }
+    
+    // Adjust for high DPI displays
+    if (devicePixelRatio > 2) {
+      baseScale *= 0.9; // Slightly smaller for very high DPI
+    } else if (devicePixelRatio > 1.5) {
+      baseScale *= 0.95; // Slightly smaller for high DPI
+    }
+    
+    console.log(`Device detection - Width: ${screenWidth}, Touch: ${isTouchDevice}, Scale: ${baseScale}`);
+    
+    return baseScale;
   }
 
   removeTarget(target, wasHit = false) {

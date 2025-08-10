@@ -11,14 +11,26 @@ body {
     padding: 0;
     background-color: #000;
     overflow: hidden;
+    /* Mobile browser optimizations */
+    -webkit-overflow-scrolling: touch;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: none;
 }
 
 #game-container {
     width: 100vw;
     height: 100vh;
+    /* Mobile viewport units for better browser support */
+    height: 100dvh; /* Dynamic viewport height */
     display: flex;
     justify-content: center;
     align-items: center;
+    /* Prevent mobile browser UI interference */
+    position: relative;
+    overflow: hidden;
 }
 
 canvas {
@@ -26,4 +38,46 @@ canvas {
     width: 100% !important;
     height: 100% !important;
     object-fit: contain;
+    /* Mobile-specific canvas optimizations */
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Prevent image saving on long press */
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    #game-container {
+        height: -webkit-fill-available;
+    }
+    
+    body {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+/* Android Chrome specific fixes */
+@media screen and (max-width: 1024px) {
+    html {
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    body {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+    
+    #game-container {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
 }
