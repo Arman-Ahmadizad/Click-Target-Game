@@ -27,7 +27,7 @@ body {
     display: block;
     /* Remove flexbox centering that may trigger zoom */
     /* Prevent mobile browser UI interference */
-    position: absolute;
+
     top: 0;
     left: 0;
     overflow: hidden;
