@@ -1,8 +1,10 @@
 import { fontStyles } from "../fontStyles.js";
+import { FullscreenManager } from "../utils/FullscreenManager.js";
 
 export class GameOver extends Phaser.Scene {
   constructor() {
     super("GameOver");
+    this.fullscreenManager = new FullscreenManager(this);
   }
 
   init(data) {
@@ -13,6 +15,8 @@ export class GameOver extends Phaser.Scene {
   preload() {
     // Load simple background
     this.load.image("background-gameover", "assets/space.png");
+    // Load fullscreen assets
+    this.fullscreenManager.preloadAssets();
   }
 
   create() {
@@ -24,6 +28,9 @@ export class GameOver extends Phaser.Scene {
     // Initialize sound state and create sound button
     this.initializeSoundState();
     this.createSoundButton();
+
+    // Create fullscreen button
+    this.fullscreenButton = this.fullscreenManager.createFullscreenButton(this.cameras.main.width - 50, this.cameras.main.height - 50);
 
     // Load and check personal best
     this.personalBest = this.loadPersonalBest();
@@ -115,6 +122,26 @@ export class GameOver extends Phaser.Scene {
 
     // Fade in effect
     this.cameras.main.fadeIn(500, 0, 0, 0);
+
+    // Handle resize events
+    this.scale.on('resize', this.handleResize, this);
+  }
+
+  handleResize(gameSize) {
+    if (this.background) {
+      this.background.setDisplaySize(gameSize.width, gameSize.height);
+    }
+
+    if (this.soundButton) {
+      this.soundButton.setPosition(50, 50);
+      const scale = this.getDeviceSpecificButtonScale();
+      this.soundButton.setScale(scale);
+    }
+
+    if (this.fullscreenButton) {
+      this.fullscreenManager.updatePosition(gameSize.width - 50, gameSize.height - 50);
+      this.fullscreenManager.handleResize();
+    }
   }
 
   loadPersonalBest() {
@@ -170,6 +197,10 @@ export class GameOver extends Phaser.Scene {
       fill: this.getSoundButtonColor(),
     });
 
+    // Set device-specific scale
+    const scale = this.getDeviceSpecificButtonScale();
+    this.soundButton.setScale(scale);
+
     // Make button interactive
     this.soundButton.setInteractive();
     this.soundButton.on("pointerdown", () => {
@@ -178,14 +209,25 @@ export class GameOver extends Phaser.Scene {
 
     // Add hover effects
     this.soundButton.on("pointerover", () => {
-      this.soundButton.setScale(1.1);
+      this.soundButton.setScale(scale * 1.1);
     });
 
     this.soundButton.on("pointerout", () => {
-      this.soundButton.setScale(1.0);
+      this.soundButton.setScale(scale);
     });
 
     ("Sound button created in GameOver scene");
+  }
+
+  getDeviceSpecificButtonScale() {
+    const screenWidth = this.cameras.main.width;
+    const isMobile = screenWidth <= 768 || 
+      (this.input.activePointer && this.input.activePointer.wasTouch);
+    const isTablet = screenWidth > 768 && screenWidth <= 1024;
+    
+    if (isMobile) return 0.7;      // Smaller for mobile
+    else if (isTablet) return 0.8; // Medium size for tablets
+    else return 1.0;               // Normal size for desktop
   }
 
   getSoundButtonText() {

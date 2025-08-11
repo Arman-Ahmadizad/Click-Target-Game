@@ -1,12 +1,15 @@
 import { fontStyles } from "../fontStyles.js";
+import { FullscreenManager } from "../utils/FullscreenManager.js";
 
 export class Start extends Phaser.Scene {
   constructor() {
     super("Start");
+    this.fullscreenManager = new FullscreenManager(this);
   }
 
   preload() {
     this.load.image("background-start", "assets/space.png");
+    this.fullscreenManager.preloadAssets();
   }
 
   create() {
@@ -44,27 +47,8 @@ export class Start extends Phaser.Scene {
     this.initializeSoundState();
     this.createSoundButton();
 
-    this.fullscreenButton = this.add.text(0, 0, "FULLSCREEN", {
-        ...fontStyles.button,
-        fill: "#ffffff",
-      }).setOrigin(1, 0);
-
-    this.fullscreenButton.setInteractive();
-    this.fullscreenButton.on("pointerup", () => {
-        if (this.scale.isFullscreen) {
-            this.scale.stopFullscreen();
-        } else {
-            this.scale.startFullscreen();
-        }
-    });
-
-    this.scale.on('fullscreenchange', (isFullscreen) => {
-        if (isFullscreen) {
-            this.fullscreenButton.setText("EXIT FULLSCREEN");
-        } else {
-            this.fullscreenButton.setText("FULLSCREEN");
-        }
-    });
+    // Create fullscreen button using the manager
+    this.fullscreenButton = this.fullscreenManager.createFullscreenButton(this.cameras.main.width - 50, this.cameras.main.height - 50);
 
     this.scale.on('resize', this.resize, this);
     this.resize({ width: this.cameras.main.width, height: this.cameras.main.height });
@@ -81,9 +65,14 @@ export class Start extends Phaser.Scene {
     this.instructionsText1.setPosition(width / 2, height * 0.4);
     this.instructionsText2.setPosition(width / 2, height * 0.45);
     this.startButton.setPosition(width / 2, height * 0.65);
-    this.soundButton.setPosition(50, 50);
+    if (this.soundButton) {
+      this.soundButton.setPosition(50, 50);
+      const scale = this.getDeviceSpecificButtonScale();
+      this.soundButton.setScale(scale);
+    }
     if (this.fullscreenButton) {
-        this.fullscreenButton.setPosition(width - 50, 50);
+      this.fullscreenManager.updatePosition(width - 50, height - 50);
+      this.fullscreenManager.handleResize();
     }
   }
 
@@ -105,10 +94,25 @@ export class Start extends Phaser.Scene {
       fill: this.getSoundButtonColor(),
     });
 
+    // Set device-specific scale
+    const scale = this.getDeviceSpecificButtonScale();
+    this.soundButton.setScale(scale);
+
     this.soundButton.setInteractive();
     this.soundButton.on("pointerdown", () => this.toggleSound());
-    this.soundButton.on("pointerover", () => this.soundButton.setScale(1.1));
-    this.soundButton.on("pointerout", () => this.soundButton.setScale(1.0));
+    this.soundButton.on("pointerover", () => this.soundButton.setScale(scale * 1.1));
+    this.soundButton.on("pointerout", () => this.soundButton.setScale(scale));
+  }
+
+  getDeviceSpecificButtonScale() {
+    const screenWidth = this.cameras.main.width;
+    const isMobile = screenWidth <= 768 || 
+      (this.input.activePointer && this.input.activePointer.wasTouch);
+    const isTablet = screenWidth > 768 && screenWidth <= 1024;
+    
+    if (isMobile) return 0.7;      // Smaller for mobile
+    else if (isTablet) return 0.8; // Medium size for tablets
+    else return 1.0;               // Normal size for desktop
   }
 
   getSoundButtonText() {

@@ -1,8 +1,12 @@
 import { fontStyles } from "../fontStyles.js";
+import { FullscreenManager } from "../utils/FullscreenManager.js";
 
 export class Gameplay extends Phaser.Scene {
   constructor() {
     super("Gameplay");
+
+    // Initialize fullscreen manager
+    this.fullscreenManager = new FullscreenManager(this);
 
     // Life configuration for different difficulty levels
     this.LIFE_CONFIG = {
@@ -48,6 +52,9 @@ export class Gameplay extends Phaser.Scene {
       frameWidth: 128, // Adjust based on actual image dimensions
       frameHeight: 128, // Adjust based on actual image dimensions
     });
+
+    // Load fullscreen assets
+    this.fullscreenManager.preloadAssets();
   }
 
   create() {
@@ -110,6 +117,9 @@ export class Gameplay extends Phaser.Scene {
 
     // Create sound button
     this.createSoundButton();
+
+    // Create fullscreen button
+    this.fullscreenButton = this.fullscreenManager.createFullscreenButton(this.cameras.main.width - 50, this.cameras.main.height - 50);
 
     // Create life progress bar
     this.createLifeProgressBar();
@@ -282,6 +292,13 @@ export class Gameplay extends Phaser.Scene {
 
     if (this.soundButton) {
       this.soundButton.setPosition(50, 50);
+      const scale = this.getDeviceSpecificButtonScale();
+      this.soundButton.setScale(scale);
+    }
+
+    if (this.fullscreenButton) {
+      this.fullscreenManager.updatePosition(gameSize.width - 50, gameSize.height - 50);
+      this.fullscreenManager.handleResize();
     }
 
     if (this.lifeBarBg && this.lifeBarFill) {
@@ -348,7 +365,7 @@ export class Gameplay extends Phaser.Scene {
 
       this.currentSpawnRate = Math.max(
         this.difficultyConfig.minSpawnRate,
-        this.difficultyConfig.baseSpawnrate - totalReduction
+        this.difficultyConfig.baseSpawnRate - totalReduction
       );
 
       const lifespanReduction = currentMilestone * 200;
@@ -358,6 +375,9 @@ export class Gameplay extends Phaser.Scene {
       );
 
       this.showDifficultyIncrease();
+
+      // Debug logging for spawn rate calculation
+      console.log(`Difficulty Level ${this.currentDifficultyLevel}: Spawn Rate = ${this.currentSpawnRate}ms, Target Lifespan = ${this.targetLifespan}ms`);
 
       return true;
     }
@@ -488,10 +508,25 @@ export class Gameplay extends Phaser.Scene {
       fill: this.getSoundButtonColor(),
     });
 
+    // Set device-specific scale
+    const scale = this.getDeviceSpecificButtonScale();
+    this.soundButton.setScale(scale);
+
     this.soundButton.setInteractive();
     this.soundButton.on("pointerdown", () => this.toggleSound());
-    this.soundButton.on("pointerover", () => this.soundButton.setScale(1.1));
-    this.soundButton.on("pointerout", () => this.soundButton.setScale(1.0));
+    this.soundButton.on("pointerover", () => this.soundButton.setScale(scale * 1.1));
+    this.soundButton.on("pointerout", () => this.soundButton.setScale(scale));
+  }
+
+  getDeviceSpecificButtonScale() {
+    const screenWidth = this.cameras.main.width;
+    const isMobile = screenWidth <= 768 || 
+      (this.input.activePointer && this.input.activePointer.wasTouch);
+    const isTablet = screenWidth > 768 && screenWidth <= 1024;
+    
+    if (isMobile) return 0.7;      // Smaller for mobile
+    else if (isTablet) return 0.8; // Medium size for tablets
+    else return 1.0;               // Normal size for desktop
   }
 
   getSoundButtonText() {
