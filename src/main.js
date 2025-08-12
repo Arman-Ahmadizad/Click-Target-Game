@@ -1,6 +1,7 @@
 import { Start } from './scenes/Start.js';
 import { Gameplay } from './scenes/Gameplay.js';
 import { GameOver } from './scenes/GameOver.js';
+import { orientationManager } from './utils/OrientationManager.js';
 
 let game;
 
@@ -47,6 +48,10 @@ function launchGame() {
 }
 
 window.addEventListener('load', () => {
+    // Initialize orientation manager first
+    orientationManager.initialize();
+    
+    // Then launch the game
     setTimeout(launchGame, 100);
 });
 

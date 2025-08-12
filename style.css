@@ -54,6 +54,56 @@ canvas {
     transform-origin: top left !important;
 }
 
+/* Portrait orientation alert - works in both normal and fullscreen modes */
+.portrait-warning {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.95) !important;
+    color: white !important;
+    z-index: 99999 !important;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: 'Press Start 2P', monospace !important;
+}
+
+.portrait-warning.show {
+    display: flex !important;
+}
+
+.portrait-warning-content {
+    max-width: 300px;
+    padding: 20px;
+    border: 2px solid #ffffff;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    color: white !important;
+    font-size: 14px;
+}
+
+/* Ensure portrait warning works even in fullscreen */
+:-webkit-full-screen .portrait-warning.show {
+    display: flex !important;
+}
+
+:-moz-full-screen .portrait-warning.show {
+    display: flex !important;
+}
+
+:fullscreen .portrait-warning.show {
+    display: flex !important;
+}
+
 /* Simplified mobile fixes - remove complex viewport manipulations */
 @media screen and (max-width: 1024px) {
     html, body {

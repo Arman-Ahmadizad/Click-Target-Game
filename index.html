@@ -40,32 +40,6 @@
                 text-decoration: none;
                 color: inherit;
             }
-            
-            /* Mobile and tablet landscape orientation enforcement */
-            @media screen and (max-width: 1024px) and (orientation: portrait) {
-                body::before {
-                    content: "Please rotate your device to landscape mode for the best gaming experience";
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(0, 0, 0, 0.9);
-                    color: white;
-                    padding: 20px;
-                    border-radius: 10px;
-                    text-align: center;
-                    z-index: 1000;
-                    font-size: 14px;
-                    max-width: 80%;
-                    transition: opacity 0.3s ease;
-                }
-                
-                #game-container {
-                    filter: blur(3px);
-                    pointer-events: none;
-                    transition: filter 0.3s ease;
-                }
-            }
 
             /* Ensure smooth transitions during orientation changes - but exclude canvas */
             body, #game-container {
@@ -111,6 +85,14 @@
     <link rel="stylesheet" href="style.css"></head>
     <body>
         <div id="game-container"></div>
+        
+        <!-- Portrait orientation warning for fullscreen compatibility -->
+        <div id="portrait-warning" class="portrait-warning">
+            <div class="portrait-warning-content">
+                <p>Please rotate your device to landscape mode for the best gaming experience</p>
+            </div>
+        </div>
+        
         <script src="./phaser.js"></script>
         <script type="module" src="./src/main.js"></script>
     </body>
