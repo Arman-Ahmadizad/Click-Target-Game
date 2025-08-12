@@ -54,6 +54,11 @@ export class FullscreenManager {
   }
 
   getDeviceSpecificScale() {
+    // Add null checks for camera during fullscreen transitions
+    if (!this.scene.cameras || !this.scene.cameras.main) {
+      return 0.7; // Default scale if camera is not available
+    }
+    
     const screenWidth = this.scene.cameras.main.width;
     const isMobile = screenWidth <= 768 || 
       (this.scene.input.activePointer && this.scene.input.activePointer.wasTouch);
@@ -87,7 +92,7 @@ export class FullscreenManager {
   }
 
   onFullscreenChange() {
-    if (!this.fullscreenButton) return;
+    if (!this.fullscreenButton || !this.fullscreenButton.active) return;
 
     // Check both Phaser's fullscreen state and browser's fullscreen state
     const isFullscreen = this.scene.scale.isFullscreen || 
@@ -96,13 +101,23 @@ export class FullscreenManager {
                         document.mozFullScreenElement || 
                         document.msFullscreenElement;
 
-    // Update sprite based on fullscreen state - CORRECTED LOGIC
-    const newTexture = isFullscreen ? 'exit_fullscreen' : 'fullscreen';
-    this.fullscreenButton.setTexture(newTexture);
-    
-    // Update scale for current device
-    const scale = this.getDeviceSpecificScale();
-    this.fullscreenButton.setScale(scale);
+    try {
+      // Update sprite based on fullscreen state - CORRECTED LOGIC
+      const newTexture = isFullscreen ? 'exit_fullscreen' : 'fullscreen';
+      
+      // Check if the sprite is still valid before setting texture
+      if (this.fullscreenButton && this.fullscreenButton.active && this.fullscreenButton.scene) {
+        this.fullscreenButton.setTexture(newTexture);
+        
+        // Update scale for current device
+        const scale = this.getDeviceSpecificScale();
+        this.fullscreenButton.setScale(scale);
+      }
+    } catch (error) {
+      console.warn('Error updating fullscreen button texture:', error);
+      // Try to recreate the button if it's in an invalid state
+      this.recreateFullscreenButton();
+    }
   }
 
   updatePosition(x, y) {
@@ -116,6 +131,28 @@ export class FullscreenManager {
       // Update scale when screen size changes
       const scale = this.getDeviceSpecificScale();
       this.fullscreenButton.setScale(scale);
+    }
+  }
+
+  recreateFullscreenButton() {
+    // Only recreate if we have a valid scene and the button was previously created
+    if (!this.scene || !this.scene.cameras || !this.scene.cameras.main) return;
+    
+    try {
+      // Store the last known position
+      const lastX = this.fullscreenButton ? this.fullscreenButton.x : this.scene.cameras.main.width - 50;
+      const lastY = this.fullscreenButton ? this.fullscreenButton.y : this.scene.cameras.main.height - 50;
+      
+      // Destroy the old button if it exists
+      if (this.fullscreenButton) {
+        this.fullscreenButton.destroy();
+      }
+      
+      // Create a new button
+      this.fullscreenButton = this.createFullscreenButton(lastX, lastY);
+    } catch (error) {
+      console.warn('Failed to recreate fullscreen button:', error);
+      this.fullscreenButton = null;
     }
   }
 

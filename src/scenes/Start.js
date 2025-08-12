@@ -105,6 +105,11 @@ export class Start extends Phaser.Scene {
   }
 
   getDeviceSpecificButtonScale() {
+    // Add null checks for camera during fullscreen transitions
+    if (!this.cameras || !this.cameras.main) {
+      return 1.0; // Default scale if camera is not available
+    }
+    
     const screenWidth = this.cameras.main.width;
     const isMobile = screenWidth <= 768 || 
       (this.input.activePointer && this.input.activePointer.wasTouch);

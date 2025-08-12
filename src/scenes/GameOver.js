@@ -128,6 +128,11 @@ export class GameOver extends Phaser.Scene {
   }
 
   handleResize(gameSize) {
+    // Add null checks for camera during fullscreen transitions
+    if (!this.cameras || !this.cameras.main) {
+      return; // Skip resize handling if camera is not available
+    }
+
     if (this.background) {
       this.background.setDisplaySize(gameSize.width, gameSize.height);
     }
@@ -220,6 +225,11 @@ export class GameOver extends Phaser.Scene {
   }
 
   getDeviceSpecificButtonScale() {
+    // Add null checks for camera during fullscreen transitions
+    if (!this.cameras || !this.cameras.main) {
+      return 1.0; // Default scale if camera is not available
+    }
+    
     const screenWidth = this.cameras.main.width;
     const isMobile = screenWidth <= 768 || 
       (this.input.activePointer && this.input.activePointer.wasTouch);
